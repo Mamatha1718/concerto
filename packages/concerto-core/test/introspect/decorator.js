@@ -47,6 +47,7 @@ describe('Decorator', () => {
 
     beforeEach(() => {
         mockAssetDeclaration = sinon.createStubInstance(AssetDeclaration);
+        mockAssetDeclaration.getModelManager.returns({});
     });
 
     describe('#constructor', () => {
@@ -75,4 +76,45 @@ describe('Decorator', () => {
         });
 
     });
+    describe('#validate DecoratorJSON', () => {
+        it('should validate a valid JSON decorator argument (Happy Path)', () => {
+            const validJSON = {
+                $class: `${MetaModelNamespace}.DecoratorJSON`,
+                value: { key1: 'value1', key2: 123, key3:true }
+            };
+            const d = new Decorator(mockAssetDeclaration, { ...ast, arguments: [validJSON] });
+            (() => d.validate()).should.not.throw();
+        });
+        it('should fail validation if JSON key is not a string (Sad Path)', () => {
+            const invalidJSON = {
+                $class: `${MetaModelNamespace}.DecoratorJSON`,
+                value: { 123: 'valu1' }
+            };
+
+            const d = new Decorator(mockAssetDeclaration, { ...ast, arguments: [invalidJSON] });
+            (() => d.validate()).should.throw('invalid key in the JSON object');
+        });
+
+        it('should fail validation if JSON value type is unsupported (Sad Path)', () => {
+            const invalidJSON = {
+                $class: `${MetaModelNamespace}.DecoratorJSON`,
+                value: { key1: ['arrayValue'] }
+            };
+
+            const d = new Decorator(mockAssetDeclaration, { ...ast, arguments: [invalidJSON] });
+            (() => d.validate()).should.throw('invalid value type in the JSON object');
+        });
+
+        it('should fail validation if argument is not an object (Sad Path)', () => {
+            const invalidJSON = {
+                $class: `${MetaModelNamespace}.DecoratorJSON`,
+                value: 'this is not an object'
+            };
+
+            const d = new Decorator(mockAssetDeclaration, { ...ast, arguments: [invalidJSON] });
+            (() => d.validate()).should.throw('Expected an object for JSON');
+        });
+
+    });
+
 });
